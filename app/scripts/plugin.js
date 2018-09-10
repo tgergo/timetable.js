@@ -31,9 +31,39 @@ Timetable.Renderer = function(tt) {
 	function isInHourRange(number) {
 		return number >= 0 && number < 24;
 	}
-	function locationExistsIn(loc, locs) {
-		return locs.indexOf(loc) !== -1;
-	}
+
+  function locationExistsIn(loc, locs) {
+    if (typeof loc === 'object') {
+      for (var i = 0; i < locs.length; i++) {
+        if (loc.name === locs[i].name) {
+          return true;
+        }
+      }
+
+      return false;
+    }
+    else {
+      for (var j = 0; j < locs.length; j++) {
+        if (typeof locs[j] === 'object' && typeof loc === 'object') {
+          if (loc.name === locs[j].name) {
+            return true;
+          }
+        }
+        else if (typeof locs[j] === 'object' && typeof loc !== 'object') {
+          if (loc === locs[j].name) {
+            return true;
+          }
+        }
+        else {
+          if (loc === locs[j]) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+  }
 	function isValidTimeRange(start, end) {
 		var correctTypes = start instanceof Date && end instanceof Date;
 		var correctOrder = start < end;
@@ -127,7 +157,12 @@ Timetable.Renderer = function(tt) {
 					var liNode = ulNode.appendChild(document.createElement('li'));
 					var spanNode = liNode.appendChild(document.createElement('span'));
 					spanNode.className = 'row-heading';
-					spanNode.textContent = timetable.locations[k];
+
+          if(typeof timetable.locations[k] === 'object'){
+            spanNode.innerHTML = timetable.locations[k].html;
+          } else {
+            spanNode.textContent = timetable.locations[k];
+          }
 				}
 			}
 			function appendTimetableSection(container) {
@@ -176,8 +211,11 @@ Timetable.Renderer = function(tt) {
 			function appendLocationEvents(location, node) {
 				for (var k=0; k<timetable.events.length; k++) {
 					var event = timetable.events[k];
-					if (event.location === location) {
-						appendEvent(event, node);
+
+					if (typeof location === 'object' && event.location === location.name){
+					  appendEvent(event, node);
+          }	else if (event.location === location) {
+            appendEvent(event, node);
 					}
 				}
 			}
@@ -216,7 +254,12 @@ Timetable.Renderer = function(tt) {
 				eventNode.className = hasAdditionalClass ? 'time-entry ' + event.options.class : 'time-entry';
 				eventNode.style.width = computeEventBlockWidth(event);
 				eventNode.style.left = computeEventBlockOffset(event);
-				smallNode.textContent = event.name;
+
+        if (event.options && event.options.html) {
+          smallNode.innerHTML = event.options.html;
+        } else {
+          smallNode.textContent = event.name;
+        }
 			}
 			function computeEventBlockWidth(event) {
 				var start = event.startDate;
